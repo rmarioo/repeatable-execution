@@ -36,13 +36,6 @@ class SearchUseCase(private val clock: Clock,
             left(GenericError(exception))
         }
 
-    private fun exceptionAsString(exception: Exception): String {
-        val sw = StringWriter()
-        exception.printStackTrace(PrintWriter(sw))
-        val exceptionAsString = sw.toString()
-        return exceptionAsString
-    }
-
     private fun checkDepartureIsInTheFuture(departureDate: LocalDateTime, clock: Clock):
         Either<DepartureDateIsInThePast, LocalDateTime> =
         if (departureDate.isAfter(clock.currentDateTime())) right(departureDate)
