@@ -2,6 +2,7 @@ package com.rmarioo.repeatableexecutrion.rest.config
 
 import com.rmarioo.repeatableexecutrion.core.model.RealClock
 import com.rmarioo.repeatableexecutrion.core.SearchUseCase
+import com.rmarioo.repeatableexecutrion.core.model.Clock
 import com.rmarioo.repeatableexecutrion.supplierAdapter.RealSupplierRepository
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -16,11 +17,11 @@ class SearchConfiguration{
             .create("http://aSupplierUrl")
     }
 
-    class SearchUseCaseFactory
+    class SearchUseCaseFactory(val clock: Clock = RealClock() )
     {
         fun create(supplierUrl: String): SearchUseCase {
             return SearchUseCase(
-                RealClock(),
+                clock,
                 RealSupplierRepository(
                     url = supplierUrl
                 )
