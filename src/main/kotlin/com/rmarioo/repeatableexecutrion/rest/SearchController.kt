@@ -66,7 +66,8 @@ private fun toDomain(searchRequest: SearchRequest): Search {
         arrivalDate = searchRequest.arrivalDate,
         departureAirport = searchRequest.departureAirport,
         arrivalAirport = searchRequest.arrivalAirport,
-        adults = searchRequest.adults
+        adults = searchRequest.adults,
+        simulateServerError = searchRequest.simulateServerError ?: false
     )
 }
 

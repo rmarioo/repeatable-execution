@@ -22,8 +22,7 @@ class SearchConfiguration{
             return SearchUseCase(
                 RealClock(),
                 RealSupplierRepository(
-                    url = supplierUrl,
-                    raiseError = true
+                    url = supplierUrl
                 )
             )
         }

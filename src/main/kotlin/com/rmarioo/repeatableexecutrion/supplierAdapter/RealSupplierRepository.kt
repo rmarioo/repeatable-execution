@@ -5,13 +5,12 @@ import com.rmarioo.repeatableexecutrion.core.model.Search
 import com.rmarioo.repeatableexecutrion.core.port.SupplierRepository
 import java.math.BigDecimal
 
-class RealSupplierRepository(private val url: String,
-                             private val raiseError: Boolean = false) :
+class RealSupplierRepository(private val url: String) :
     SupplierRepository
 {
     override fun doSearch(search: Search): List<Flight> =
 
-        if (raiseError)
+        if (search.simulateServerError)
             throw RuntimeException("unexpected error happened for $search")
         else
             listOf(

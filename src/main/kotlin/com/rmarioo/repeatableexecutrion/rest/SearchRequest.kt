@@ -7,5 +7,6 @@ data class SearchRequest(
     val arrivalDate: LocalDateTime,
     val departureAirport: String,
     val arrivalAirport: String,
-    val adults: Int
+    val adults: Int,
+    val simulateServerError : Boolean? = false
 )
