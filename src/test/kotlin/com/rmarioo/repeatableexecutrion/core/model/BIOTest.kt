@@ -29,7 +29,12 @@ class BIOTest {
 
 
 
+
+
     }
+
+    fun <A, B, C> BIO<A, B>.flatMap(other: (B) -> BIO<A, C>): BIO<A, C> =
+        BIO.Bind(this,other)
 
     private fun printResult(result: Either<Throwable, Int>) {
         result.fold(
