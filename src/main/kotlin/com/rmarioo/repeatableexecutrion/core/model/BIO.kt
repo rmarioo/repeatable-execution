@@ -23,6 +23,39 @@ sealed class BIO<out E, out A> {
         override fun unsafeRunSynch(): Either<E, A> = f()
     }
 
+    fun myUnsafeRunSync(): Either<E, A> {
+       return  runLoop(this)
+    }
+
+    private fun <B> runLoop(bio: BIO<E, A>): Either<E, A> {
+        return when(bio) {
+            is Pure -> Either.Right(bio.a)
+            is Suspend -> try {
+                            Either.right(bio.f())
+                        } catch (e: Exception) {
+                            Either.left(bio.fme(e))
+                        }
+            is SuspendEither -> bio.f()
+            is Bind<E,B,A> ->  {
+                val either: Either<E, B> =  bio.cont.myUnsafeRunSync()
+                val hh: BIO<E, A> = when(either) {
+                    is Either.Right -> bio.g(either.b)
+                    is Either.Left -> bio
+                }
+               hh.myUnsafeRunSync()
+            }
+        }
+    }
+
+
+    internal data class Bind<E, A, B>(val cont: BIO<E, A>, val g: (A) -> BIO<E,B>) : BIO<E,B>
+        () {
+        override fun unsafeRunSynch(): Either<E, B> {
+            throw AssertionError("Unreachable")
+        }
+
+    }
+
     companion object {
 
         operator fun <E, A> invoke(f: () -> A, fme: (Exception) -> E): BIO<E, A> =

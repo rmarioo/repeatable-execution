@@ -3,6 +3,7 @@ package com.rmarioo.repeatableexecutrion.core
 import arrow.core.Either
 import arrow.core.Either.Companion.left
 import arrow.core.Either.Companion.right
+import arrow.core.EitherOf
 import arrow.core.fix
 import arrow.core.flatMap
 import com.rmarioo.repeatableexecutrion.core.model.BIO
@@ -47,6 +48,9 @@ class SearchUseCase(private val clock: Clock,
         if (arrivalAirport == "NYC") left(SearchNotAllowed("search in new york is forbidden"))
         else right(arrivalAirport)
 
+
+    fun <A, B, C> BIO<A, B>.flatMap(other: (B) -> BIO<A, C>): BIO<A, C> =
+        BIO.Bind(this,other)
 
 
 }
