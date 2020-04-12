@@ -1,16 +1,17 @@
 package com.rmarioo.repeatableexecutrion.core.model
 
 import arrow.core.Either
+import java.lang.RuntimeException
 
 sealed class BIO<out E, out A> {
-    abstract fun unsafeRunSynch(): Either<E, A>
+    abstract fun attempt(): Either<E, A>
 
     class Pure<out E, out A>(val a: A) : BIO<E, A>() {
-        override fun unsafeRunSynch(): Either<E, A> = Either.right(a)
+        override fun attempt(): Either<E, A> = Either.right(a)
     }
 
     class Suspend<out E, out A>(val f: () -> A, val fme: (Exception) -> E) : BIO<E, A>() {
-        override fun unsafeRunSynch(): Either<E, A> {
+        override fun attempt(): Either<E, A> {
             return try {
                 Either.right(f())
             } catch (e: Exception) {
@@ -20,20 +21,38 @@ sealed class BIO<out E, out A> {
     }
 
     class SuspendEither<out E, out A>(val f: () -> Either<E,A>) : BIO<E, A>() {
-        override fun unsafeRunSynch(): Either<E, A> = f()
+        override fun attempt(): Either<E, A> = f()
     }
 
     internal data class Bind<E, A, B>(val cont: BIO<E, A>, val g: (A) -> BIO<E,B>) : BIO<E,B>
         () {
-        override fun unsafeRunSynch(): Either<E, B> {
+        override fun attempt(): Either<E, B> {
 
-            val either: Either<E, A> = cont.unsafeRunSynch()
+            val either: Either<E, A> = cont.attempt()
             return when(either) {
-                is Either.Right -> g(either.b).unsafeRunSynch()
+                is Either.Right -> g(either.b).attempt()
                 is Either.Left -> either
             }
         }
 
+    }
+
+    internal data class Map<E, A, B>(val cont: BIO<E, A>, val g: (A) -> B) : BIO<E,B>
+        () {
+        override fun attempt(): Either<E, B> {
+            val either: Either<E, A> = cont.attempt()
+            return when(either) {
+                is Either.Right -> Either.Right(g(either.b))
+                is Either.Left -> either
+            }
+        }
+
+    }
+
+    fun unsafeRunAsync(): A
+    {
+        return attempt().fold(
+            { e: E -> throw RuntimeException("error $e") }, { v -> v })
     }
 
     companion object {
@@ -77,4 +96,13 @@ sealed class BIO<out E, out A> {
 
 }
 
-class GenericError
+fun <A, B, C> BIO<A, B>.flatMap(other: (B) -> BIO<A, C>): BIO<A, C> =
+    BIO.Bind(this,other)
+
+fun <A, B, C> BIO<A, B>.map(other: (B) -> C): BIO<A, C> =
+    BIO.Map(this,other)
+
+
+operator fun <E> BIO<E, Int>.plus(result2: BIO<E, Int>): Int =
+    this.flatMap { r1 -> result2.map { r2 -> r1 + r2 } }.unsafeRunAsync()
+
