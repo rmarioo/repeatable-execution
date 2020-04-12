@@ -23,35 +23,15 @@ sealed class BIO<out E, out A> {
         override fun unsafeRunSynch(): Either<E, A> = f()
     }
 
-    fun myUnsafeRunSync(): Either<E, A> {
-       return  runLoop(this)
-    }
-
-    private fun <B> runLoop(bio: BIO<E, A>): Either<E, A> {
-        return when(bio) {
-            is Pure -> Either.Right(bio.a)
-            is Suspend -> try {
-                            Either.right(bio.f())
-                        } catch (e: Exception) {
-                            Either.left(bio.fme(e))
-                        }
-            is SuspendEither -> bio.f()
-            is Bind<E,B,A> ->  {
-                val either: Either<E, B> =  bio.cont.myUnsafeRunSync()
-                val hh: BIO<E, A> = when(either) {
-                    is Either.Right -> bio.g(either.b)
-                    is Either.Left -> bio
-                }
-               hh.myUnsafeRunSync()
-            }
-        }
-    }
-
-
     internal data class Bind<E, A, B>(val cont: BIO<E, A>, val g: (A) -> BIO<E,B>) : BIO<E,B>
         () {
         override fun unsafeRunSynch(): Either<E, B> {
-            throw AssertionError("Unreachable")
+
+            val either: Either<E, A> = cont.unsafeRunSynch()
+            return when(either) {
+                is Either.Right -> g(either.b).unsafeRunSynch()
+                is Either.Left -> either
+            }
         }
 
     }
@@ -69,6 +49,30 @@ sealed class BIO<out E, out A> {
 
         fun <A> just(a: A): BIO<Nothing, A> = Pure(a)
     }
+
+    /*
+   fun myUnsafeRunSync(): Either<E, A> {
+      return  runLoop(this)
+   }
+
+   private fun runLoop(bio: BIO<E, A>): Either<E, A> {
+       return bio.unsafeRunSynch()
+   }
+
+    private fun runLoop(bio: BIO<E, A>): Either<E, A> {
+         return when(bio) {
+             is Pure -> Either.Right(bio.a)
+             is Suspend -> try {
+                             Either.right(bio.f())
+                         } catch (e: Exception) {
+                             Either.left(bio.fme(e))
+                         }
+             is SuspendEither -> bio.f()
+             else -> bio.unsafeRunSynch()
+         }
+     }
+     */
+
 
 
 }
