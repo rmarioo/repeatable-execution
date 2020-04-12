@@ -1,28 +1,43 @@
 package com.rmarioo.repeatableexecutrion.core.model
 
 import arrow.core.Either
-import kotlin.coroutines.EmptyCoroutineContext
 
-sealed class BIO<out E,out A> {
+sealed class BIO<out E, out A> {
     abstract fun unsafeRunSynch(): Either<E, A>
 
-    class Pure<out E,out A>(val a: A): BIO< E, A>() {
+    class Pure<out E, out A>(val a: A) : BIO<E, A>() {
         override fun unsafeRunSynch(): Either<E, A> = Either.right(a)
     }
 
-    class Suspend<out E,out A>(val f: () -> A): BIO<E,A>() {
+    class Suspend<out E, out A>(val f: () -> A, val fme: (Exception) -> E) : BIO<E, A>() {
         override fun unsafeRunSynch(): Either<E, A> {
-           TODO()
+            return try {
+                Either.right(f())
+            } catch (e: Exception) {
+                Either.left(fme(e))
+            }
         }
+    }
+
+    class SuspendEither<out E, out A>(val f: () -> Either<E,A>) : BIO<E, A>() {
+        override fun unsafeRunSynch(): Either<E, A> = f()
     }
 
     companion object {
 
-       operator fun <E,A> invoke(f:  () -> A): BIO<E,A> =
-           Suspend(f)
+        operator fun <E, A> invoke(f: () -> A, fme: (Exception) -> E): BIO<E, A> =
+            Suspend(f, fme)
 
-       fun <E,A> just(a: A): BIO<E,A> = Pure(a)
-   }
+        operator fun <E, A> invoke(f: () -> Either<E,A>): BIO<E, A> =
+            SuspendEither(f)
+
+        fun <A> suspend(f: () -> A): BIO<Throwable, A> =
+            Suspend(f, { e -> e })
+
+        fun <A> just(a: A): BIO<Nothing, A> = Pure(a)
+    }
 
 
 }
+
+class GenericError

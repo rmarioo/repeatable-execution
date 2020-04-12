@@ -3,7 +3,9 @@ package com.rmarioo.repeatableexecutrion.core
 import arrow.core.Either
 import arrow.core.Either.Companion.left
 import arrow.core.Either.Companion.right
+import arrow.core.fix
 import arrow.core.flatMap
+import com.rmarioo.repeatableexecutrion.core.model.BIO
 import com.rmarioo.repeatableexecutrion.core.model.Error.DepartureDateIsInThePast
 import com.rmarioo.repeatableexecutrion.core.model.Error.GenericError
 import com.rmarioo.repeatableexecutrion.core.model.Error.SearchNotAllowed
