@@ -24,7 +24,7 @@ sealed class BIO<out E, out A> {
         override fun attempt(): Either<E, A> = f()
     }
 
-    internal data class Bind<E, A, B>(val cont: BIO<E, A>, val g: (A) -> BIO<E,B>) : BIO<E,B>
+     data class Bind<E, A, B>(val cont: BIO<E, A>, val g: (A) -> BIO<E,B>) : BIO<E,B>
         () {
         override fun attempt(): Either<E, B> {
 
@@ -37,7 +37,7 @@ sealed class BIO<out E, out A> {
 
     }
 
-    internal data class Map<E, A, B>(val cont: BIO<E, A>, val g: (A) -> B) : BIO<E,B>
+     data class Map<E, A, B>(val cont: BIO<E, A>, val g: (A) -> B) : BIO<E,B>
         () {
         override fun attempt(): Either<E, B> {
             val either: Either<E, A> = cont.attempt()
@@ -95,6 +95,8 @@ sealed class BIO<out E, out A> {
 
 
 }
+
+
 
 fun <A, B, C> BIO<A, B>.flatMap(other: (B) -> BIO<A, C>): BIO<A, C> =
     BIO.Bind(this,other)

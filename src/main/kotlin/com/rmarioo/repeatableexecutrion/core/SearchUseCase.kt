@@ -1,29 +1,24 @@
 package com.rmarioo.repeatableexecutrion.core
 
-import arrow.core.Either
 import arrow.core.Either.Companion.left
 import arrow.core.Either.Companion.right
-import arrow.core.EitherOf
-import arrow.core.fix
-import arrow.core.flatMap
 import com.rmarioo.repeatableexecutrion.core.model.BIO
+import com.rmarioo.repeatableexecutrion.core.model.Clock
+import com.rmarioo.repeatableexecutrion.core.model.Error
 import com.rmarioo.repeatableexecutrion.core.model.Error.DepartureDateIsInThePast
 import com.rmarioo.repeatableexecutrion.core.model.Error.GenericError
 import com.rmarioo.repeatableexecutrion.core.model.Error.SearchNotAllowed
-import com.rmarioo.repeatableexecutrion.core.model.Clock
-import com.rmarioo.repeatableexecutrion.core.model.Error
 import com.rmarioo.repeatableexecutrion.core.model.Flight
 import com.rmarioo.repeatableexecutrion.core.model.Search
+import com.rmarioo.repeatableexecutrion.core.model.flatMap
 import com.rmarioo.repeatableexecutrion.core.port.SupplierRepository
-import java.io.PrintWriter
-import java.io.StringWriter
 import java.time.LocalDateTime
 
 class SearchUseCase(private val clock: Clock,
                     private val supplierRepository: SupplierRepository
 ) {
 
-    fun doSearch(search: Search): Either<Error, List<Flight>> {
+    fun doSearch(search: Search): BIO<Error, List<Flight>> {
 
         return  checkDepartureIsInTheFuture(search.departureDate, clock)    .flatMap {
                 checkArrivalIsNotInNewYork(search.arrivalAirport) }         .flatMap {
@@ -32,25 +27,19 @@ class SearchUseCase(private val clock: Clock,
         }
     }
 
-    private fun wrapExceptionToGenericError(searchFunction: () -> List<Flight>): Either<Error, List<Flight>> =
-        try {
-            right(searchFunction())
-        } catch(exception: Exception) {
-            left(GenericError(exception))
-        }
+    private fun wrapExceptionToGenericError(searchFunction: () -> List<Flight>): BIO<GenericError,
+        List<Flight>> {
+        return BIO( {searchFunction()},{ GenericError(it) })
+    }
+
 
     private fun checkDepartureIsInTheFuture(departureDate: LocalDateTime, clock: Clock):
-        Either<DepartureDateIsInThePast, LocalDateTime> =
-        if (departureDate.isAfter(clock.currentDateTime())) right(departureDate)
-        else left(DepartureDateIsInThePast(departureDate,clock.currentDateTime()))
+        BIO<DepartureDateIsInThePast, LocalDateTime> =
+        if (departureDate.isAfter(clock.currentDateTime())) BIO{ right(departureDate)}
+        else BIO{left(DepartureDateIsInThePast(departureDate,clock.currentDateTime()))}
 
-    private fun checkArrivalIsNotInNewYork(arrivalAirport: String): Either<SearchNotAllowed, String> =
-        if (arrivalAirport == "NYC") left(SearchNotAllowed("search in new york is forbidden"))
-        else right(arrivalAirport)
-
-
-    fun <A, B, C> BIO<A, B>.flatMap(other: (B) -> BIO<A, C>): BIO<A, C> =
-        BIO.Bind(this,other)
-
+    private fun checkArrivalIsNotInNewYork(arrivalAirport: String): BIO<SearchNotAllowed, String> =
+        if (arrivalAirport == "NYC") BIO{left(SearchNotAllowed("search in new york is forbidden"))}
+        else BIO{right(arrivalAirport)}
 
 }

@@ -81,7 +81,7 @@ class SearchControllerTest {
     }
 
     @Test
-    internal fun departureDateInPast() {
+    internal fun unexpectedError() {
         mvc.perform(
             MockMvcRequestBuilders
                 .post("/search")
@@ -99,6 +99,28 @@ class SearchControllerTest {
                 .accept(APPLICATION_JSON)
         )
             .andExpect(status().isInternalServerError)
+
+    }
+
+    @Test
+    internal fun invalidRequest() {
+        mvc.perform(
+            MockMvcRequestBuilders
+                .post("/search")
+                .content(
+                    """{
+                          "departureDate": "2019-04-12T13:23:34.070Z",
+                          "arrivalDate": "2020-04-12T13:23:34.070Z",
+                          "departureAirport": "MXP",
+                          "arrivalAirport": "LON",
+                          "adults": 1,
+                          "simulateServerError": true
+                        }"""
+                )
+                .contentType(APPLICATION_JSON)
+                .accept(APPLICATION_JSON)
+        )
+            .andExpect(status().isBadRequest)
 
     }
 

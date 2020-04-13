@@ -8,6 +8,7 @@ import com.rmarioo.repeatableexecutrion.core.model.Error.SearchNotAllowed
 import com.rmarioo.repeatableexecutrion.core.model.Flight
 import com.rmarioo.repeatableexecutrion.core.model.Search
 import com.rmarioo.repeatableexecutrion.core.SearchUseCase
+import com.rmarioo.repeatableexecutrion.core.model.BIO
 import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity
 import org.springframework.http.ResponseEntity.badRequest
@@ -26,8 +27,9 @@ class SearchController(val searchUseCase: SearchUseCase) {
     @PostMapping("/search")
     fun doSearch(@RequestBody searchRequest: SearchRequest): ResponseEntity<*> {
 
-        val result: Either<Error,List<Flight>> = searchUseCase.doSearch(toDomain(searchRequest));
+        val bio: BIO<Error, List<Flight>> = searchUseCase.doSearch(toDomain(searchRequest));
 
+        val result = bio.attempt()
         return result.fold(
             { error   -> logAndHandleError(error, searchRequest) },
             { flights -> ok(flights) })
