@@ -1,52 +1,20 @@
 package com.rmarioo.repeatableexecutrion.core.model
 
-import arrow.core.Either
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
 
 class BIOTest {
 
     @Test
-     fun create() {
-
-        val division: (Int) -> Int = { x: Int -> 10 /x }
-
-        val bioSuccess: BIO<Throwable, Int> = BIO.task { division(2) }
-        val bioWithError: BIO<Throwable, Int> = BIO.task { division(0) }
-
-
-        println("prima1 di esecuzione")
-        printResult(bioSuccess.attempt())
-        println("dopo1 di esecuzione")
-
-        println("prima2 di esecuzione")
-        printResult(bioWithError.attempt())
-        println("dopo2 di esecuzione")
-
-
-
-
-
-    }
-
-
-
-    private fun printResult(result: Either<Throwable, Int>) {
-        result.fold(
-            { e -> println("errore ${e.message}") },
-            { v -> println("risultato $v") })
-    }
-
-    @Test
     fun referentialTransparency() {
 
         val p1WithDuplication               = executeProgram { `p1 with duplication`() }
-        val p1Refactored                     = executeProgram { `p1 refactored`() }
+        val p1Refactored                    = executeProgram { `p1 refactored`() }
 
         Assertions.assertThat(p1Refactored).isNotEqualTo(p1WithDuplication)
 
         val p2WithDuplication               = executeProgram { `p2 with duplication`()}
-        val p2Refactored                     = executeProgram { `p2 refactored`() }
+        val p2Refactored                    = executeProgram { `p2 refactored`() }
 
         Assertions.assertThat(p2Refactored).isEqualTo(p2WithDuplication)
         Assertions.assertThat(p2Refactored).isEqualTo(p1WithDuplication)
@@ -57,7 +25,6 @@ class BIOTest {
 
         val result1: Int = doSomething(3)
         val result2: Int = doSomething(3)
-
 
         return result1 + result2
     }
@@ -109,4 +76,31 @@ class BIOTest {
         const val A_CONST = 4
     }
 
+
+/*    @Test
+    fun create() {
+
+        val division: (Int) -> Int = { x: Int -> 10 /x }
+
+        val bioSuccess: BIO<Throwable, Int> = BIO.task { division(2) }
+        val bioWithError: BIO<Throwable, Int> = BIO.task { division(0) }
+
+
+        println("prima1 di esecuzione")
+        printResult(bioSuccess.attempt())
+        println("dopo1 di esecuzione")
+
+        println("prima2 di esecuzione")
+        printResult(bioWithError.attempt())
+        println("dopo2 di esecuzione")
+
+    }
+
+
+
+    private fun printResult(result: Either<Throwable, Int>) {
+        result.fold(
+            { e -> println("errore ${e.message}") },
+            { v -> println("risultato $v") })
+    }*/
 }
