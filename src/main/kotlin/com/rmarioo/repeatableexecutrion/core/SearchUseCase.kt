@@ -36,7 +36,7 @@ class SearchUseCase(private val clock: Clock,
     private fun checkDepartureIsInTheFuture(departureDate: LocalDateTime, clock: Clock):
         BIO<DepartureDateIsInThePast, LocalDateTime> =
         if (departureDate.isAfter(clock.currentDateTime())) BIO{ right(departureDate)}
-        else BIO{left(DepartureDateIsInThePast(departureDate,clock.currentDateTime()))}
+        else BIO { left(DepartureDateIsInThePast(departureDate,clock.currentDateTime()))}
 
     private fun checkArrivalIsNotInNewYork(arrivalAirport: String): BIO<SearchNotAllowed, String> =
         if (arrivalAirport == "NYC") BIO{left(SearchNotAllowed("search in new york is forbidden"))}

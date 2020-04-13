@@ -6,7 +6,7 @@ import java.lang.RuntimeException
 sealed class BIO<out E, out A> {
     abstract fun attempt(): Either<E, A>
 
-    class Pure<out E, out A>(val a: A) : BIO<E, A>() {
+    class Pure<out E, out A>(private val a: A) : BIO<E, A>() {
         override fun attempt(): Either<E, A> = Either.right(a)
     }
 
@@ -28,8 +28,7 @@ sealed class BIO<out E, out A> {
         () {
         override fun attempt(): Either<E, B> {
 
-            val either: Either<E, A> = cont.attempt()
-            return when(either) {
+            return when(val either: Either<E, A> = cont.attempt()) {
                 is Either.Right -> g(either.b).attempt()
                 is Either.Left -> either
             }
@@ -40,8 +39,7 @@ sealed class BIO<out E, out A> {
      data class Map<E, A, B>(val cont: BIO<E, A>, val g: (A) -> B) : BIO<E,B>
         () {
         override fun attempt(): Either<E, B> {
-            val either: Either<E, A> = cont.attempt()
-            return when(either) {
+            return when(val either: Either<E, A> = cont.attempt()) {
                 is Either.Right -> Either.Right(g(either.b))
                 is Either.Left -> either
             }
@@ -63,36 +61,11 @@ sealed class BIO<out E, out A> {
         operator fun <E, A> invoke(f: () -> Either<E,A>): BIO<E, A> =
             SuspendEither(f)
 
-        fun <A> suspend(f: () -> A): BIO<Throwable, A> =
+        fun <A> task(f: () -> A): BIO<Throwable, A> =
             Suspend(f, { e -> e })
 
         fun <A> just(a: A): BIO<Nothing, A> = Pure(a)
     }
-
-    /*
-   fun myUnsafeRunSync(): Either<E, A> {
-      return  runLoop(this)
-   }
-
-   private fun runLoop(bio: BIO<E, A>): Either<E, A> {
-       return bio.unsafeRunSynch()
-   }
-
-    private fun runLoop(bio: BIO<E, A>): Either<E, A> {
-         return when(bio) {
-             is Pure -> Either.Right(bio.a)
-             is Suspend -> try {
-                             Either.right(bio.f())
-                         } catch (e: Exception) {
-                             Either.left(bio.fme(e))
-                         }
-             is SuspendEither -> bio.f()
-             else -> bio.unsafeRunSynch()
-         }
-     }
-     */
-
-
 
 }
 

@@ -4,7 +4,6 @@ import com.rmarioo.repeatableexecutrion.core.model.Clock
 import com.rmarioo.repeatableexecutrion.rest.config.SearchConfiguration.SearchUseCaseFactory
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import org.springframework.http.MediaType
 import org.springframework.http.MediaType.APPLICATION_JSON
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders

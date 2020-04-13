@@ -1,14 +1,13 @@
 package com.rmarioo.repeatableexecutrion.rest
 
-import arrow.core.Either
+import com.rmarioo.repeatableexecutrion.core.SearchUseCase
+import com.rmarioo.repeatableexecutrion.core.model.BIO
 import com.rmarioo.repeatableexecutrion.core.model.Error
 import com.rmarioo.repeatableexecutrion.core.model.Error.DepartureDateIsInThePast
 import com.rmarioo.repeatableexecutrion.core.model.Error.GenericError
 import com.rmarioo.repeatableexecutrion.core.model.Error.SearchNotAllowed
 import com.rmarioo.repeatableexecutrion.core.model.Flight
 import com.rmarioo.repeatableexecutrion.core.model.Search
-import com.rmarioo.repeatableexecutrion.core.SearchUseCase
-import com.rmarioo.repeatableexecutrion.core.model.BIO
 import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity
 import org.springframework.http.ResponseEntity.badRequest
@@ -27,7 +26,7 @@ class SearchController(val searchUseCase: SearchUseCase) {
     @PostMapping("/search")
     fun doSearch(@RequestBody searchRequest: SearchRequest): ResponseEntity<*> {
 
-        val bio: BIO<Error, List<Flight>> = searchUseCase.doSearch(toDomain(searchRequest));
+        val bio: BIO<Error, List<Flight>> = searchUseCase.doSearch(toDomain(searchRequest))
 
         val result = bio.attempt()
         return result.fold(
@@ -51,7 +50,7 @@ class SearchController(val searchUseCase: SearchUseCase) {
 
     private fun logGenericError(message: String, error: GenericError): ResponseEntity<String> {
         logger.error(message, error.exception)
-        return status(500).body("$message")
+        return status(500).body(message)
     }
 
     private fun logBadRequest(message: String): ResponseEntity<String> {
