@@ -16,6 +16,8 @@ import org.springframework.http.ResponseEntity.status
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
+import java.io.PrintWriter
+import java.io.StringWriter
 
 
 @RestController
@@ -26,48 +28,51 @@ class SearchController(val searchUseCase: SearchUseCase) {
     @PostMapping("/search")
     fun doSearch(@RequestBody searchRequest: SearchRequest): ResponseEntity<*> {
 
-        val result: Either<Error,List<Flight>> = searchUseCase.doSearch(toDomain(searchRequest));
+        val result: Either<Error, List<Flight>> = searchUseCase.doSearch(toDomain(searchRequest));
 
         return result.fold(
-            { error   -> logAndHandleError(error, searchRequest) },
+            { error ->
+                logger.error("error happened with request $searchRequest error: ${error.toLogMessage()}")
+                error.toResponseEntity()
+            },
             { flights -> ok(flights) })
     }
 
-    private fun logAndHandleError(error: Error, searchRequest: SearchRequest) =
-        when (error) {
-            is DepartureDateIsInThePast ->
-                logBadRequest("""departureDate   ${error.departureDate} is in the past 
-                              current time is ${error.currentDateTime} 
-                              request $searchRequest""".trimMargin())
-            is SearchNotAllowed ->
-                logBadRequest("search not allowed ${error.cause} for request $searchRequest")
+    private fun Error.toResponseEntity(): ResponseEntity<String> {
+        val errorToLog = this.toLogMessage()
+        return when (this) {
+            is DepartureDateIsInThePast -> badRequest().body(errorToLog)
+            is SearchNotAllowed -> badRequest().body(errorToLog)
+            is GenericError -> status(500).body(errorToLog)
+        }
+    }
 
-            is GenericError ->
-                logGenericError("generic error ${error.exception.message} happened for request $searchRequest", error)
+    fun Error.toLogMessage(): String {
 
+        return when (this) {
+            is DepartureDateIsInThePast -> """departureDate   ${departureDate} is in the past 
+                              current time is ${currentDateTime}"""
+            is SearchNotAllowed -> "search not allowed ${cause} "
+            is GenericError -> """generic error ${exception.message} happened for request ${exceptionToString(exception)}t"""
         }
 
-    private fun logGenericError(message: String, error: GenericError): ResponseEntity<String> {
-        logger.error(message, error.exception)
-        return status(500).body("$message")
     }
 
-    private fun logBadRequest(message: String): ResponseEntity<String> {
-        logger.error(message)
-        return badRequest().body(message)
+    fun exceptionToString(e: Throwable): String {
+        val sw = StringWriter()
+        e.printStackTrace(PrintWriter(sw))
+        return sw.toString();
     }
 
 
+    private fun toDomain(searchRequest: SearchRequest): Search {
+        return Search(
+            departureDate = searchRequest.departureDate,
+            arrivalDate = searchRequest.arrivalDate,
+            departureAirport = searchRequest.departureAirport,
+            arrivalAirport = searchRequest.arrivalAirport,
+            adults = searchRequest.adults,
+            simulateServerError = searchRequest.simulateServerError ?: false
+        )
+    }
 }
-
-private fun toDomain(searchRequest: SearchRequest): Search {
-    return Search(
-        departureDate = searchRequest.departureDate,
-        arrivalDate = searchRequest.arrivalDate,
-        departureAirport = searchRequest.departureAirport,
-        arrivalAirport = searchRequest.arrivalAirport,
-        adults = searchRequest.adults,
-        simulateServerError = searchRequest.simulateServerError ?: false
-    )
-}
-
